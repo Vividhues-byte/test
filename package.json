@@ -1,0 +1,13 @@
+{
+    "name": "client-feedback-generator",
+    "version": "1.0.0",
+    "description": "Figma plugin that generate fake client feedback on designs.",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "watch": "tsc -p tsconfig.json --watch"
+    },
+    "devDependencies": {
+        "figma/plugin-typings": "^1.90.0",
+        "typescript": "^5.4.0"
+    }
+}
