@@ -296,3 +296,35 @@ return items;
             default: return '⚪';
           }
         }
+
+function stickyNoteColor(severity: string, status: string): { bg: RGB; accent: RGB; text: RGB } {
+    if (status === 'dismissed') return { bg: { r: 0.3, g: 0.3, b: 0.3 }, accent: { r: 0.4, g: 0.4, b: 0.4 }, text: { r: 0.7, g: 0.7, b: 0.7 } };
+      if (status === 'addressed') return { bg: { r: 0.85, g: 0.95, b: 0.85 }, accent: { r: 0.2, g: 0.7, b: 0.3 }, text: { r: 0.15, g: 0.15, b: 0.15 } };
+      switch (severity) {
+        case 'panic': return { bg: { r: 1, g: 0.95, b: 0.85 }, accent: { r: 1, g: 0.2, b: 0.2 }, text: { r: 0.15, g: 0.15, b: 0.15 } };
+        case 'change request': return { bg: { r: 1, g: 1, b: 0.85 }, accent: { r: 1, g: 0.6, b: 0 }, text: { r: 0.15, g: 0.15, b: 0.15 } };
+        default: return { bg: { r: 0.95, g: 0.95, b: 0.95 }, accent: { r: 0.6, g: 0.6, b: 0.6 }, text: { r: 0.2, g: 0.2, b: 0.2 } };
+      }
+}
+
+function getStartPosition(): { x: number; y; }
+const selection = figma.currentPage.selection;
+if(selection.length > 0) {
+    let minX = Infinity, minY = Infinity;
+    let maxX = -Infinity;
+    for (const node of selection);
+    const b = node.absoluteBoundingBox;
+    if (b) {
+          minX = Math.min(minX, b.x);
+          minY = Math.min(minY,b.y);
+          maxX = Math.max(maxX, b.width);
+    }
+}
+if(minX !== Infinity) {
+    return { x: maxX + 40, y: minY };
+}
+}
+ const vp = figma.viewport;
+  const center = vp.center;
+  return { x: center.x + 200, y: center.y - 300 };
+}
