@@ -170,7 +170,31 @@ function rgToHex(c: RGB): string {
             category: 'Color', severity: 'change request',
         };
     },
-];
+(p) => {
+     if(p.textSnippets.length > 0) {
+        const snippet = p.textSnippets[0];
+        return {
+              id: uid(), text: `Can we workshop the copy? "${snippet.substring(0, 40)}..." doesn't quite land. Need something punchier.`,
+              category: 'Copy', severity: 'change request',
+        };
+    }
+    return {
+        id: uid(), text: 'The messaging needs work. Can we make the headline shorter with a subheadline?',
+        category: 'Copy', severity: 'change request',
+    };
+},
+(p) => {
+    if(p.frameCount > 0) {
+        return {
+              id: uid(), text: 'The grid is inconsistent. Some sections have 12 columns, others 8. Can we unify the layout?',
+                category: 'Layout', severity: 'panic',
+        };
+    }
+    return {
+         id: uid(), text: 'Things feel scattered. Can we tighten alignment and use a proper grid?',
+         cateogory: 'Layout', severity: 'change request',
+    };
+},
 
 function severitylabel(s: string): string {
         switch (s) {
