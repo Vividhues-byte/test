@@ -328,3 +328,58 @@ if(minX !== Infinity) {
   const center = vp.center;
   return { x: center.x + 200, y: center.y - 300 };
 }
+
+const placedNodes = new Map<string, StickyNoteData>();
+
+function makeStickyNote(item: FeedbackItem, x: number, y: number): StickyNoteData {
+    const noteW = 220, noteH = 120;
+    const severity = item.severity || 'change request';
+    const status = item.status || 'active';
+
+    const frame = figma.createFrame();
+    frame.name = item.id;
+    frame.x = x;
+    frame.y = y;
+    frame.resize(noteW, noteW);
+    frame.cornerRadius = 8;
+
+    const { bg, accent, text } = stickyNoteColor(severity,status);
+    frame.fills = [{ type: 'SOLID', color: bg }];
+    frame.strokeWeight = 0;
+
+    const bar = figma.createRectangle();
+    bar.resize(4, noteH);
+    bar.fills = [{ type: 'SOLID', color: accent }];
+    bar.cornerRadius = 0;
+    frame.appendChild(bar);
+
+    const headText = figma.createText();
+    headText.fontName = { famly: 'Inter', style: 'Bold' },
+    headText.fontSize = 10;
+    headText.fills = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 0.4 } }];
+    headText.characters = `${severityLabel(severity)} ${severity.toUpperCase()}  \u2022  ${item.category}`;
+    headText.x = 12;
+    headText.y = 8;
+    frame.appendChild(headText);
+
+    const body = figma.createText();
+    body.fontName = { family: 'Inter', style: 'Regular' };
+    body.fontSize = 11;
+    body.fills = [{ type: 'SOLID', color: text }];
+    body.characters = item.text;
+    body.x = 12;
+    body.y = 28;
+    body.resize(noteW - 24, 80);
+    body.textAutoResize = 'HEIGHT';
+    frame.appendChild(body);
+
+    frame.setPluginData('type','client-feedback');
+    frame.setPluginData('id',item.id);
+    frame.setPluginData('severity',severity);
+     frame.setPluginData('status', status);
+      frame.setPluginData('category', item.category);
+      frame.setPluginData('text', item.text);
+      if (item.nodeId) frame.setPluginData('relatedNodeId', item.nodeId);
+    
+      return { frame, textNode: body, barNode: bar, severity, status };
+    }
