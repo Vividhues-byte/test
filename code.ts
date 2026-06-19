@@ -106,8 +106,34 @@ function rgToHex(c: RGB): string {
     if (name.includes('icon') || name.includes('svg') || name.includes('glyph')) {
         profile.hasIcons = true;
     }
+
+ if (node.type === 'TEXT') {
+    const t = (node as TextNode).characters.trim();
+    if (t.length > 2) {
+        profile.textCount++;
+        if (profile.textSnippets.length < 5) {
+            profile.textSnippets.push(t.substring(0, 80));
+        }
+    }
 }
 
+ if ('fills' in node) {
+    const fills = (node as GeometryMixin).fills as Paint[] | typeof figma.mixed;
+    if (Array.isArray(fills)) {
+        for (const fill of fills) {
+            if (fill.type === 'IMAGE') profile.hasImage = true;
+            if (fill.type === 'GRADIENT_LINEAR' || fill.type === 'GRADIENT_RADIAL') profile.hasGradients = true;
+            if (fill.type === 'SOLID' && fill.color) {
+                colorSet.add(rgToHex(fill.color));
+            }
+        }
+    }
+}
+
+  if(node.type === 'FRAME' || node.type === 'GROUP') profile.frameCount++;
+  if(node.type === 'INSTANCE' || node.type === 'COMPONENT') || node.type === 'COMPONENT_SET') profile.componentCount++;
+    }
+    
     profile.colorCount = colorSet.size;
     if (colorSet.size > 0) {
         const colors = Array.from(colorSet);
