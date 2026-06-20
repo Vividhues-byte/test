@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+             body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: #2C2C2C;
+                color: #E8E8E8;
+                font-size: 12px;
+                line-height: 1.4;
+                overflow-x: hidden;
+             }
+             .header {
+                padding: 16px 16px 12px;
+                border-bottom: 1px solid #505050;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+             }
+             .header h1 {
+                font-size: 13px;
+                font-weight: 600;
+                flex: 1;
+             }
+             .header .badge {
+                font-size: 10px;
+                background: #383838;
+                padding: 2px 8px;
+                border-radius: 4px;
+                color: #A0A0A0;
+             }
+             .content {
+                padding: 12px 16px 24px;
+             }
+             .empty-state {
+              text-align: center;
+              padding: 48px 20px;
+              color: #A0A0A0;
+             }
+         .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+         .empty-state h3 {
+            font-size: 14px;
+            color: #E8E8E8;
+            margin-bottom: 6px;
+         }
+         .empty-state p {
+            font-size: 12px;
+            line-height: 1.5,
+         }    
+         </style>
+         </head>
+         <body>
+            <div class="header">
+                <h1>&#x1F4AC; Client Feedback</h1>
+                <span class="badge" id="counter">0 notes</span>
+              </div>
+            
+              <div class="content">
+                <div class="empty-state" id="emptyState">
+                  <div class="icon">&#x1F4AD;</div>
+                  <h3>Ready to get roasted?</h3>
+                  <p>Select some layers or a frame, then click <strong>Generate Feedback</strong> to see what your "client" would say.</p>
+                </div>
+              </div>
+            </body>
+            </html>
