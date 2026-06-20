@@ -83,7 +83,36 @@
             background: #383838;
             border-radius: 8px;
             padding: 12px;
+            border-left: 3px solid transparent;
         }        
+      .feedback-card.severity-panic { border-left-color: #FF3B30; }
+      .feedback-card.severity-change-request { border-left-color: #FF9F0A; };
+      .feedback-card.severity-nitpick { border-left-color: #8E8E93; }
+      .feedback-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      }
+      .category-badge{
+         font-size: 10px;
+         font-weight: 600;
+         padding: 2px 6px;
+         border-radius: 3px;
+         background: #2C2C2C;
+         color: #A0A0A0;
+      }
+       .severity-badge {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+          }
+          .feedback-card.severity-panic .severity-badge { background: rgba(255,59,48,0.2); color: #FF3B30; }
+          .feedback-card.severity-change-request .severity-badge { background: rgba(255,159,10,0.2); color: #FF9F0A; }
+          .feedback-card.severity-nitpick .severity-badge { background: rgba(142,142,147,0.2); color: #8E8E93; }
         .feedback-text {
             font-size: 12px;
             line-height: 1.5;
@@ -146,7 +175,14 @@
         
               let html = '';
               for (const item of items) {
-                html += '<div class="feedback-card">' +
+                 const severityClass = 'severity-' + item.severity.replace(/\s+/g, '-');
+                        const sevLabel = item.severity === 'panic' ? '\u{1F534}' : item.severity === 'change request' ? '\u{1F7E1}' : '\u{26AA}';
+                      
+                        html += '<div class="feedback-card ' + severityClass + '">' +
+                          '<div class="feedback-header">' +
+                          '<span class="severity-badge">' + sevLabel + ' ' + item.severity + '</span>' +
+                          '<span class="category-badge">' + escHtml(item.category) + '</span>' +
+                          '</div>' +
                   '<div class="feedback-text">' + escHtml(item.text) + '</div>' +
                   '</div>';
               }
