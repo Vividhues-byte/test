@@ -61,8 +61,6 @@ function rgToHex(c: RGB): string {
     allNodes.push(child);
       }
     }
-    }
-    
     const profile: DesignProfile = {
         hasLogo: false,
         logoNodeName: '',
@@ -131,20 +129,20 @@ function rgToHex(c: RGB): string {
 }
 
   if(node.type === 'FRAME' || node.type === 'GROUP') profile.frameCount++;
-  if(node.type === 'INSTANCE' || node.type === 'COMPONENT') || node.type === 'COMPONENT_SET') profile.componentCount++;
+  if(node.type === 'INSTANCE' || node.type === 'COMPONENT' || node.type === 'COMPONENT_SET') profile.componentCount++;
     }
 
     profile.colorCount = colorSet.size;
     if (colorSet.size > 0) {
         const colors = Array.from(colorSet);
-        profile.sampleColor = colors[0];
+        profile.sampleColors = colors[0];
         profile.sampleColorsHex = colors[0];
     }
 
     return profile;
 }
     
-   const feedbackGenerators: Array<(p: DesignProfile) => FeedbackItem = | null> = [ (p) => {
+  const feedbackGenerators: Array<(p: DesignProfile) => FeedbackItem | null> = [
     (p) => {
         if (p.hasLogo) {
             const name = p.logoNodeName || 'this logo';
@@ -161,7 +159,7 @@ function rgToHex(c: RGB): string {
     (p) => {
         if(p.colorCount > 0 && p.sampleColorsHex) {
             return {
-              id: uid(), text: `I'm thinking ${p.sampleColorHex} isn't quite right. What if we tried blue? #0066FF is more trustworthy.`,    
+              id: uid(), text: `I'm thinking ${p.sampleColorsHex} isn't quite right. What if we tried blue? #0066FF is more trustworthy.`,    
            category: 'Color', severity: 'change request',
             };
         }
@@ -200,7 +198,7 @@ function rgToHex(c: RGB): string {
   category: 'Whitespace',severity:'nitpick',
 }),
 (p) => {
-    if(p.componetCount > 0) {
+    if(p.componentCount > 0) {
         return {
              id: uid(), text: 'These components don\'t match our design system. Check the brand guidelines.',
             category: 'Branding', severity: 'panic',
@@ -212,7 +210,7 @@ function rgToHex(c: RGB): string {
     };
 },
 () => ({
-    id: uid(), text: 'My 12-year-old nephew made a website in school that looks identical to this. Just saying.'
+    id: uid(), text: 'My 12-year-old nephew made a website in school that looks identical to this. Just saying.',
     category: 'My Nephew', severity: 'nitpick',
 }),
    () => ({
@@ -237,7 +235,7 @@ return {
 },
    (p) => {
     if(p.hasButtons) {
-        const label = p.buttonLabels[0] || 'this button';
+       const label = p.buttonsLabels[0] || 'this button';
         return {
             id: uid(), text: `"${label}" — is this the primary action? It doesn't feel prominent enough.`,
             category: 'Buttons', severity: 'change request',
@@ -253,7 +251,7 @@ return {
        category: 'Mobile', severity: 'panic',
 }),
 (p) => {
-    if(p.hasImages) {
+    if(p.hasImage) {
         return {
             id: uid(), text: 'These images feel stock-photo-y. Can we use original photography instead?',
             category: 'Images', severity: 'change request',
@@ -280,7 +278,7 @@ category: 'Confliciting Feedback', severity: 'panic',
 function generateFeedback(profile: DesignProfile): FeedbackItem[] {
 const items: FeedbackItem[] = [];
 for (const generator of feedbackGenerators) {
-    const item = gen(profile);
+    const item = generator(profile);
    if (item) {
   if(!item.status) item.status = 'active';
 items.push(item);
@@ -307,26 +305,26 @@ function stickyNoteColor(severity: string, status: string): { bg: RGB; accent: R
       }
 }
 
-function getStartPosition(): { x: number; y; }
-const selection = figma.currentPage.selection;
-if(selection.length > 0) {
-    let minX = Infinity, minY = Infinity;
-    let maxX = -Infinity;
-    for (const node of selection);
-    const b = node.absoluteBoundingBox;
-    if (b) {
-          minX = Math.min(minX, b.x);
-          minY = Math.min(minY,b.y);
-          maxX = Math.max(maxX, b.width);
+function getStartPosition(): { x: number; y: number } {
+    const selection = figma.currentPage.selection;
+    if(selection.length > 0) {
+        let minX = Infinity, minY = Infinity;
+        let maxX = -Infinity;
+        for (const node of selection) {
+            const b = node.absoluteBoundingBox;
+            if (b) {
+                minX = Math.min(minX, b.x);
+                minY = Math.min(minY, b.y);
+                maxX = Math.max(maxX, b.x + b.width);
+            }
+        }
+        if (minX !== Infinity) {
+            return { x: maxX + 40, y: minY };
+        }
     }
-}
-if(minX !== Infinity) {
-    return { x: maxX + 40, y: minY };
-}
-}
- const vp = figma.viewport;
-  const center = vp.center;
-  return { x: center.x + 200, y: center.y - 300 };
+    const vp = figma.viewport;
+    const center = vp.center;
+    return { x: center.x + 200, y: center.y - 300 };
 }
 
 const loadedFonts = { regular: false, bold: false };
