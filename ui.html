@@ -88,6 +88,34 @@
       .feedback-card.severity-panic { border-left-color: #FF3B30; }
       .feedback-card.severity-change-request { border-left-color: #FF9F0A; };
       .feedback-card.severity-nitpick { border-left-color: #8E8E93; }
+      .feedback-card.status-dismissed { opacity: 0.5; }
+      .feedback-card-status-addressed{ opacity: 0.7; }
+      .feedback-card.status-addressed .feedback-text { text-decoration: line-through; }
+     .feedback-actions {
+      display: flex;
+     gap: 4px;
+     flex-wrap: wrap;
+     }
+     .btn-small {
+     padding: 4px 8px;
+     font-size: 11px;
+     border-radius: 4px;
+     border: none;
+     cursor: pointer;
+     }
+     .btn-dismiss { background: #555; color: #ccc; }
+         .btn-dismiss:hover { background: #666; }
+         .btn-address { background: #30D158; color: #fff; }
+         .btn-address:hover { background: #40E868; }
+         .status-tag {
+           font-size: 9px;
+           padding: 1px 6px;
+           border-radius: 3px;
+           text-transform: uppercase;
+           letter-spacing: 0.3px;
+         }
+         .feedback-card.status-addressed .status-tag { background: rgba(48,209,88,0.2); color: #30D158; }
+         .feedback-card.status-dismissed .status-tag { background: rgba(85,85,85,0.3); color: #999; }
       .feedback-header {
       display: flex;
       align-items: center;
@@ -176,17 +204,37 @@
               let html = '';
               for (const item of items) {
                  const severityClass = 'severity-' + item.severity.replace(/\s+/g, '-');
-                        const sevLabel = item.severity === 'panic' ? '\u{1F534}' : item.severity === 'change request' ? '\u{1F7E1}' : '\u{26AA}';
+                  const statusClass = 'status-' + item.status;      
+                 const sevLabel = item.severity === 'panic' ? '\u{1F534}' : item.severity === 'change request' ? '\u{1F7E1}' : '\u{26AA}';
                       
-                        html += '<div class="feedback-card ' + severityClass + '">' +
+                       let actionsHtml = '';
+                              if (item.status === 'active') {
+                                actionsHtml = '<button class="btn-small btn-dismiss" data-id="' + item.id + '" data-action="dismiss">Dismiss</button>' +
+                                  '<button class="btn-small btn-address" data-id="' + item.id + '" data-action="address">Mark Addressed</button>';
+                              } else if (item.status === 'dismissed') {
+                                actionsHtml = '<span class="status-tag">Dismissed</span>';
+                              } else if (item.status === 'addressed') {
+                                actionsHtml = '<span class="status-tag">Addressed</span>';
+                              }
+                 
+                              html += '<div class="feedback-card ' + severityClass + ' ' + statusClass + '">' +
                           '<div class="feedback-header">' +
                           '<span class="severity-badge">' + sevLabel + ' ' + item.severity + '</span>' +
                           '<span class="category-badge">' + escHtml(item.category) + '</span>' +
                           '</div>' +
                   '<div class="feedback-text">' + escHtml(item.text) + '</div>' +
+                    '<div class="feedback-actions">' + actionsHtml + '</div>' +
                   '</div>';
               }
               feedbackList.innerHTML = html;
+           
+           feedbackList.querySelectorAll('button[data-action]').forEach(function(btn) {
+                   btn.addEventListener('click', function() {
+                     var id = btn.getAttribute('data-id');
+                     var action = btn.getAttribute('data-action');
+                     parent.postMessage({ pluginMessage: { type: action, id: id } }, '*');
+                   });
+                 });
             }
           
             function escHtml(s) {
