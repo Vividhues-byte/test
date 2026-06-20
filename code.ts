@@ -329,6 +329,19 @@ if(minX !== Infinity) {
   return { x: center.x + 200, y: center.y - 300 };
 }
 
+const loadedFonts = { regular: false, bold: false };
+
+async function ensureFonts(): Promise<void> {
+if (!loadedFonts.regular) {
+   await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+   loadedFonts.regular = true;
+}
+if(!loadedFonts.bold) {
+  await figma.loadFontAsync({ family: 'Inter', style: 'Bold' });
+  loadedFonts.bold = true;
+}
+}
+
 const placedNodes = new Map<string, StickyNoteData>();
 
 function makeStickyNote(item: FeedbackItem, x: number, y: number): StickyNoteData {
