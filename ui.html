@@ -50,7 +50,47 @@
             font-size: 12px;
             line-height: 1.5,
          }    
-         </style>
+        .toolbar {
+        padding: 12px 16px;
+        display: flex;
+        gap: 8px;
+        border-bottom: 1px solid #505050;
+        }
+        .btn{
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        }
+        .btn-primary{
+        background: #0D99FF;
+        color: #fff;
+        flex: 1;
+        justify-content: center;
+        }
+        .btn-primary:hover { background: #1AA3FF }
+        .feedback-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .feedback-card{
+            background: #383838;
+            border-radius: 8px;
+            padding: 12px;
+        }        
+        .feedback-text {
+            font-size: 12px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            color: #E8E8E8;
+        }
+        </style>
          </head>
          <body>
             <div class="header">
@@ -58,12 +98,66 @@
                 <span class="badge" id="counter">0 notes</span>
               </div>
             
+          <div class="toolbar">
+           <button class="btn btn-primary" id="generateBtn">&#x1F3AF; Generate Feedback</button>
+          </div>
+          
               <div class="content">
                 <div class="empty-state" id="emptyState">
                   <div class="icon">&#x1F4AD;</div>
                   <h3>Ready to get roasted?</h3>
                   <p>Select some layers or a frame, then click <strong>Generate Feedback</strong> to see what your "client" would say.</p>
                 </div>
-              </div>
-            </body>
+             
+            <div class="feedback-list" id="feedbackList" style="display:none"></div>
+            </div>
+            
+           <script>
+         const generateBtn = document.getElementById('generateBtn');
+            const feedbackList = document.getElementById('feedbackList');
+            const emptyState = document.getElementById('emptyState');
+            const counter = document.getElementById('counter');
+            let items = [];
+        
+        function onmessage(event) {
+           const msg = event.data.pluginMessage || event data;
+           if(msg.type === 'feedback') {
+            items = msg.items || [];
+        render();
+           }
+        }
+        window.addEventListener('message',onmessage);
+        
+        generateBtn.addEventListener('click',() => {
+         parent.postMessage({ pluginMessage: { type: 'generate' } }, '*');
+            });
+        
+        function render() {
+        counter.textContent = items.length + ' notes';
+        
+         if (items.length === 0) {
+                emptyState.style.display = 'block';
+                feedbackList.style.display = 'none';
+                return;
+              }
+        
+        emptyState.style.display = 'none';
+        feedbackList.style.display = 'flex';
+        
+              let html = '';
+              for (const item of items) {
+                html += '<div class="feedback-card">' +
+                  '<div class="feedback-text">' + escHtml(item.text) + '</div>' +
+                  '</div>';
+              }
+              feedbackList.innerHTML = html;
+            }
+          
+            function escHtml(s) {
+              const d = document.createElement('div');
+              d.textContent = s;
+              return d.innerHTML;
+            }
+          </script>
+        </body>
             </html>
