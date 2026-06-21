@@ -1,237 +1,236 @@
-"user strict";
-
+"use strict";
 function uid() {
     return 'fb_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
 }
-function rgbToHex(c) {
-      const r = Math.round(c.r * 255).toString(16).padStart(2, '0');
-        const g = Math.round(c.g * 255).toString(16).padStart(2, '0');
-        const b = Math.round(c.b * 255).toString(16).padStart(2, '0');
-        return `#${r}${g}${b}`.toUpperCase();
+function rgToHex(c) {
+    const r = Math.round(c.r * 255).toString(16).padStart(2, '0');
+    const g = Math.round(c.g * 255).toString(16).padStart(2, '0');
+    const b = Math.round(c.b * 255).toString(16).padStart(2, '0');
+    return `#${r}${g}${b}`.toUpperCase();
+}
+function getDesignProfile() {
+    const selection = figma.currentPage.selection;
+    const allNodes = [];
+    const source = selection.length > 0 ? selection : figma.currentPage.children;
+    for (const node of source) {
+        allNodes.push(node);
+        if ('children' in node) {
+            for (const child of node.children) {
+                allNodes.push(child);
+            }
+        }
     }
-    function getDesignProfile() {
-        const selection = figma.currentPage.selection;
-        const allNodes = [];
-          const source = selection.length > 0 ? selection : figma.currentPage.children;
-          for (const node of source) {
-                  allNodes.push(node);
-                  if ('children' in node) {
-                      for (const child of node.children) {
-                          allNodes.push(child);
-                      }
-                  }
-              }
-              const profile = {
-                 hasLogo: false,
-                        logoNodeName: '',
-                        logoNodeId: '',
-                        textCount: 0,
-                        textSnippets: [],
-                        hasImages: false,
-                        colorCount: 0,
-                        sampleColor: '',
-                        sampleColorHex: '',
-                        frameCount: 0,
-                        componentCount: 0,
-                        hasMultiplePages: figma.root.children.length > 1,
-                        nodeCount: allNodes.length,
-                        hasButtons: false,
-                        buttonLabels: [],
-                        hasIcons: false,
-                        hasGradient: false,
-              };
-              const colorSet = new Set();
-              for (const node of allNodes) {
-                const name = node.name.toLowerCase();
-                 if (name.includes('logo') || name.includes('brand') || name.includes('header-logo')) {
-                            profile.hasLogo = true;
-                            profile.logoNodeName = node.name;
-                            profile.logoNodeId = node.id;
-                        }
-                        if (name.includes('button') || name.includes('btn') || name.includes('cta')) {
-                                    profile.hasButtons = true;
-                                    if (node.type === 'TEXT') {
-                                        profile.buttonLabels.push(node.characters);
-                                    }
-                                    else {
-                                        profile.buttonLabels.push(node.name);
-                                    }
-                                }
-                                 if (name.includes('icon') || name.includes('svg') || name.includes('glyph')) {
-                                            profile.hasIcons = true;
-                                        }
-                                        if (node.type === 'TEXT') {
-                                            const t = node.characters.trim();
-                                            if (t.length > 2) {
-                                                profile.textCount++;
-                                                if (profile.textSnippets.length < 5) {
-                                                    profile.textSnippets.push(t.substring(0, 80));
-                                                }
-                                            }
-                                        }
-                        if ('fills' in node) {
-                                    const fills = node.fills;
-                                    if (Array.isArray(fills)) {
-                                        for (const fill of fills) {
-                                            if (fill.type === 'IMAGE')
-                                                profile.hasImages = true;
-                                            if (fill.type === 'GRADIENT_LINEAR' || fill.type === 'GRADIENT_RADIAL')
-                                                profile.hasGradients = true;
-                                            if (fill.type === 'SOLID' && fill.color) {
-                                                colorSet.add(rgbToHex(fill.color));
-                                            }
-                                        }
-                                    }
-                                }
-                           if (node.type === 'FRAME' || node.type === 'GROUP')
-                                    profile.frameCount++;
-                                if (node.type === 'INSTANCE' || node.type === 'COMPONENT' || node.type === 'COMPONENT_SET')
-                                    profile.componentCount++;
-                            }
-                            profile.colorCount = colorSet.size;
-                            if (colorSet.size > 0) {
-                                const colors = Array.from(colorSet);
-                                profile.sampleColor = colors[0];
-                                profile.sampleColorHex = colors[0];
-                            }
-                            return profile;
-                        }
-                    const feedbackGenerators = [
-                                (p) => {
-                                        if (p.hasLogo) {
-                                            const name = p.logoNodeName || 'the logo';
-                                            return {
-                                                id: uid(), text: `"${name}" needs to be at least 30% bigger. It's getting completely lost. Make it command attention.`,
-                                                category: 'Logo Size', severity: 'change request', nodeId: p.logoNodeId, nodeName: p.logoNodeName,
-                                            };
-                                        }
-                     return{
-                        id: uid(), text: 'Can we make the logoo bigger? It should be the first thing people see. Like, twice as big.',
-                        category: 'Logo Size', severity: 'change request',
-                     };
-                    },
-                    (p) => {
-                         if (p.colorCount > 0 && p.sampleColorHex) {
-                                    return {
-                                        id: uid(), text: `I'm thinking ${p.sampleColorHex} isn't quite right. What if we tried blue? #0066FF is more trustworthy.`,
-                                        category: 'Color', severity: 'change request',
-                                    };
-                                }
-                         return {
-                                    id: uid(), text: 'The palette feels safe. Can we try a vibrant blue as the primary?',
-                                    category: 'Color', severity: 'change request',
-                                };
-                            },
-                            (p) => {
-                                if (p.textSnippets.length > 0) {
-                                    const snippet = p.textSnippets[0];
-                                    return {
-                                        id: uid(), text: `Can we workshop the copy? "${snippet.substring(0, 40)}..." doesn't quite land. Need something punchier.`,
-                                        category: 'Copy', severity: 'change request',
-                                    };
-                                }
-                            return {
-                                  id: uid(), text: 'The messaging needs work. Can we make the headline shorter with a subheadline?',
-                                  category: 'Copy', severity: 'change request',
-                            };
-                        },
-                                               (p) => {
-                                               if (p.frameCount > 2) {
-                                                          return {
-                                                              id: uid(), text: 'The grid is inconsistent. Some sections have 12 columns, others 8. Can we unify the layout?',
-                                                              category: 'Layout', severity: 'panic',
-                                                          };
-                                                      }
-                                                      return {
-                                                          id: uid(), text: 'Things feel scattered. Can we tighten alignment and use a proper grid?',
-                                                          category: 'Layout', severity: 'change request',
-                                                      };
-                                                  },
-                                                  () => ({
-                                                      id: uid(), text: 'There is WAY too much whitespace. Can we condense things? People scroll too much.',
-                                                      category: 'Whitespace', severity: 'nitpick',
-                                                  }),
-                                                  (p) => {
-                                                      if (p.componentCount > 0) {
-                                                          return {
-                                                              id: uid(), text: 'These components don\'t match our design system. Check the brand guidelines.',
-                                                              category: 'Branding', severity: 'panic',
-                                                          };
-                                                      }
-                                                      return {
-                                                          id: uid(), text: 'Does this follow our brand guidelines? I don\'t see our visual identity anywhere.',
-                                                          category: 'Branding', severity: 'panic',
-                                                      };
-                                                  },
-                                                  () => ({
-                                                      id: uid(), text: 'My 12-year-old nephew made a website in school that looks identical to this. Just saying.',
-                                                      category: 'My Nephew', severity: 'nitpick',
-                                                  }),
-                                                  () => ({
-                                                      id: uid(), text: 'Apple\'s website does this exact thing but way better. Can we study what they do?',
-                                                      category: 'Competitor', severity: 'change request',
-                                                  }),
-                                                  () => ({
-                                                      id: uid(), text: 'Can we add a live chat widget, dark mode, and turn this into a PWA while we\'re at it? Small ask.',
-                                                      category: 'Scope Creep', severity: 'panic',
-                                                  }),
-                                                  (p) => {
-                                                      if (p.textCount > 3) {
-                                                          return {
-                                                              id: uid(), text: 'This font isn\'t working. Too playful for our audience. Try Inter or SF Pro.',
-                                                              category: 'Typography', severity: 'change request',
-                                                          };
-                                                      }
-                                                      return {
-                                                          id: uid(), text: 'The typography hierarchy is flat. Headlines don\'t look like headlines. Bump the size and weight.',
-                                                          category: 'Typography', severity: 'change request',
-                                                      };
-                                                  },
-                                                  (p) => {
-                                                      if (p.hasButtons) {
-                                                          const label = p.buttonLabels[0] || 'this button';
-                                                          return {
-                                                              id: uid(), text: `"${label}" — is this the primary action? It doesn't feel prominent enough.`,
-                                                              category: 'Buttons', severity: 'change request',
-                                                          };
-                                                      }
-                                                      return {
-                                                          id: uid(), text: 'Where\'s the call to action? We need a prominent CTA.',
-                                                          category: 'Buttons', severity: 'panic',
-                                                      };
-                                                  },
-                                                  () => ({
-                                                    id: uid(), text: 'Does this work on mobile? I pulled it up on my iPhone and everything overlaps.',
-                                                    category: 'Mobile', severity: 'panic',
-                                                  }),
-                                                    (p) => {
-                                                          if (p.hasImages) {
-                                                              return {
-                                                                  id: uid(), text: 'These images feel stock-photo-y. Can we use original photography instead?',
-                                                                  category: 'Images', severity: 'change request',
-                                                              };
-                                                          }                                                           
-                                                      if (p.hasIcons) {
-                                                          return {
-                                                                        id: uid(), text: 'Icons are inconsistent — some outlined, some filled. Pick one style.',
-                                                                        category: 'Icons', severity: 'nitpick',
-                                                                    };
-                                                                }
-                                                                return null;
-                                                            },
-                                                            () => ({
-                                                                id: uid(), text:'The color contrast fails WCAG AA. I checked. We\'re going to get sued. (Okay maybe not but fix it.)',
-                                                                category: 'Accessibility', severity: 'panic',
-                                                            }),
-                                                            () => ({
-                                                                id: uid(), text: 'Dave in sales wants the opposite of what marketing said. Can you make it work for both?',
-                                                                category: 'Conflicting Feedback', severity: 'panic',
-                                                            }),
-                                                        ];
-                                                        function generateFeedback(profile) {
+    const profile = {
+        hasLogo: false,
+        logoNodeName: '',
+        logoNodeId: '',
+        textCount: 0,
+        textSnippets: [],
+        hasImage: false,
+        colorCount: 0,
+        sampleColors: '',
+        sampleColorsHex: '',
+        frameCount: 0,
+        componentCount: 0,
+        hasMultiplePages: figma.root.children.length > 1,
+        nodeCount: allNodes.length,
+        hasButtons: false,
+        buttonsLabels: [],
+        hasIcons: false,
+        hasGradients: false,
+    };
+    const colorSet = new Set();
+    for (const node of allNodes) {
+        const name = node.name.toLowerCase();
+        if (name.includes('logo') || name.includes('brand') || name.includes('header-logo')) {
+            profile.hasLogo = true;
+            profile.logoNodeName = node.name;
+            profile.logoNodeId = node.id;
+        }
+        if (name.includes('button') || name.includes('btn') || name.includes('cta')) {
+            profile.hasButtons = true;
+            if (node.type === 'TEXT') {
+                profile.buttonsLabels.push(node.characters);
+            }
+            else {
+                profile.buttonsLabels.push(node.name);
+            }
+        }
+        if (name.includes('icon') || name.includes('svg') || name.includes('glyph')) {
+            profile.hasIcons = true;
+        }
+        if (node.type === 'TEXT') {
+            const t = node.characters.trim();
+            if (t.length > 2) {
+                profile.textCount++;
+                if (profile.textSnippets.length < 5) {
+                    profile.textSnippets.push(t.substring(0, 80));
+                }
+            }
+        }
+        if ('fills' in node) {
+            const fills = node.fills;
+            if (Array.isArray(fills)) {
+                for (const fill of fills) {
+                    if (fill.type === 'IMAGE')
+                        profile.hasImage = true;
+                    if (fill.type === 'GRADIENT_LINEAR' || fill.type === 'GRADIENT_RADIAL')
+                        profile.hasGradients = true;
+                    if (fill.type === 'SOLID' && fill.color) {
+                        colorSet.add(rgToHex(fill.color));
+                    }
+                }
+            }
+        }
+        if (node.type === 'FRAME' || node.type === 'GROUP')
+            profile.frameCount++;
+        if (node.type === 'INSTANCE' || node.type === 'COMPONENT' || node.type === 'COMPONENT_SET')
+            profile.componentCount++;
+    }
+    profile.colorCount = colorSet.size;
+    if (colorSet.size > 0) {
+        const colors = Array.from(colorSet);
+        profile.sampleColors = colors[0];
+        profile.sampleColorsHex = colors[0];
+    }
+    return profile;
+}
+const feedbackGenerators = [
+    (p) => {
+        if (p.hasLogo) {
+            const name = p.logoNodeName || 'this logo';
+            return {
+                id: uid(), text: `"${name}" needs to be at least 30% bigger. It's getting completely lost. Make it command attention.`,
+                category: 'Logo Size', severity: 'change request', nodeId: p.logoNodeId, nodeName: p.logoNodeName,
+            };
+        }
+        return {
+            id: uid(), text: 'Can we make the logo bigger? It should be the first thing people see. Like, twice as big.',
+            category: 'Logo Size', severity: 'change request',
+        };
+    },
+    (p) => {
+        if (p.colorCount > 0 && p.sampleColorsHex) {
+            return {
+                id: uid(), text: `I'm thinking ${p.sampleColorsHex} isn't quite right. What if we tried blue? #0066FF is more trustworthy.`,
+                category: 'Color', severity: 'change request',
+            };
+        }
+        return {
+            id: uid(), text: 'The palette feels safe. Can we try a vibrant blue as the primary?',
+            category: 'Color', severity: 'change request',
+        };
+    },
+    (p) => {
+        if (p.textSnippets.length > 0) {
+            const snippet = p.textSnippets[0];
+            return {
+                id: uid(), text: `Can we workshop the copy? "${snippet.substring(0, 40)}..." doesn't quite land. Need something punchier.`,
+                category: 'Copy', severity: 'change request',
+            };
+        }
+        return {
+            id: uid(), text: 'The messaging needs work. Can we make the headline shorter with a subheadline?',
+            category: 'Copy', severity: 'change request',
+        };
+    },
+    (p) => {
+        if (p.frameCount > 0) {
+            return {
+                id: uid(), text: 'The grid is inconsistent. Some sections have 12 columns, others 8. Can we unify the layout?',
+                category: 'Layout', severity: 'panic',
+            };
+        }
+        return {
+            id: uid(), text: 'Things feel scattered. Can we tighten alignment and use a proper grid?',
+            category: 'Layout', severity: 'change request',
+        };
+    },
+    () => ({
+        id: uid(), text: 'There is WAY too much whitespace. Can we condense things? People scroll too much.',
+        category: 'Whitespace', severity: 'nitpick',
+    }),
+    (p) => {
+        if (p.componentCount > 0) {
+            return {
+                id: uid(), text: 'These components don\'t match our design system. Check the brand guidelines.',
+                category: 'Branding', severity: 'panic',
+            };
+        }
+        return {
+            id: uid(), text: 'Does this follow our brand guidelines? I don\'t see our visual identity anywhere.',
+            category: 'Branding', severity: 'panic',
+        };
+    },
+    () => ({
+        id: uid(), text: 'My 12-year-old nephew made a website in school that looks identical to this. Just saying.',
+        category: 'My Nephew', severity: 'nitpick',
+    }),
+    () => ({
+        id: uid(), text: 'Apple\'s website does this exact thing but way better. Can we study what they do?',
+        category: 'Competitor', severity: 'change request',
+    }),
+    () => ({
+        id: uid(), text: 'Can we add a live chat widget, dark mode, and turn this into a PWA while we\'re at it? Small ask.',
+        category: 'Scope Creep', severity: 'panic'
+    }),
+    (p) => {
+        if (p.textCount > 3) {
+            return {
+                id: uid(), text: 'This font isn\'t working. Too playful for our audience. Try Inter or SF Pro.',
+                category: 'Typography', severity: 'change request',
+            };
+        }
+        return {
+            id: uid(), text: 'The typography hierarchy is flat. Headlines don\'t look like headlines. Bump the size and weight.',
+            category: 'Typography', severity: 'change request',
+        };
+    },
+    (p) => {
+        if (p.hasButtons) {
+            const label = p.buttonsLabels[0] || 'this button';
+            return {
+                id: uid(), text: `"${label}" — is this the primary action? It doesn't feel prominent enough.`,
+                category: 'Buttons', severity: 'change request',
+            };
+        }
+        return {
+            id: uid(), text: 'Where\'s the call to action? We need a prominent CTA.',
+            category: 'Buttons', severity: 'panic',
+        };
+    },
+    () => ({
+        id: uid(), text: 'Does this work on mobile? I pulled it up on my iPhone and everything overlaps.',
+        category: 'Mobile', severity: 'panic',
+    }),
+    (p) => {
+        if (p.hasImage) {
+            return {
+                id: uid(), text: 'These images feel stock-photo-y. Can we use original photography instead?',
+                category: 'Images', severity: 'change request',
+            };
+        }
+        if (p.hasIcons) {
+            return {
+                id: uid(), text: 'Icons are inconsistent — some outlined, some filled. Pick one style.',
+                category: 'Icons', severity: 'nitpick',
+            };
+        }
+        return null;
+    },
+    () => ({
+        id: uid(), text: 'This color contrast fails WCAG AA. I checked. We\'re going to get sued.(Okay maybe not but fix it.)',
+        category: 'Accessibility', severity: 'panic',
+    }),
+    () => ({
+        id: uid(), text: 'Dave in sales wants the opposite of what marketing said. Can you make it work for both?',
+        category: 'Confliciting Feedback', severity: 'panic',
+    }),
+];
+function generateFeedback(profile) {
     const items = [];
-    for (const gen of feedbackGenerators) {
-        const item = gen(profile);
+    for (const generator of feedbackGenerators) {
+        const item = generator(profile);
         if (item) {
             if (!item.status)
                 item.status = 'active';
@@ -240,7 +239,7 @@ function rgbToHex(c) {
     }
     return items;
 }
-function severityLabel(s) {
+function severitylabel(s) {
     switch (s) {
         case 'panic': return '🔴';
         case 'change request': return '🟡';
@@ -310,10 +309,10 @@ function makeStickyNote(item, x, y) {
     bar.cornerRadius = 0;
     frame.appendChild(bar);
     const headText = figma.createText();
-    headText.fontName = { family: 'Inter', style: 'Bold' };
-    headText.fontSize = 10;
+    headText.fontName = { family: 'Inter', style: 'Bold' },
+        headText.fontSize = 10;
     headText.fills = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 0.4 } }];
-     headText.characters = `${severityLabel(severity)} ${severity.toUpperCase()}  \u2022  ${item.category}`;
+    headText.characters = `${severitylabel(severity)} ${severity.toUpperCase()}  \u2022  ${item.category}`;
     headText.x = 12;
     headText.y = 8;
     frame.appendChild(headText);
@@ -404,7 +403,7 @@ figma.ui.onmessage = async (msg) => {
             const profile = getDesignProfile();
             const items = generateFeedback(profile);
             createAnnotations(items);
-            broadcastItems();
+            broadcastItem();
             const frames = Array.from(placedNodes.values()).map(d => d.frame).filter(f => !f.removed);
             if (frames.length > 0)
                 figma.viewport.scrollAndZoomIntoView(frames);
@@ -414,21 +413,21 @@ figma.ui.onmessage = async (msg) => {
             const data = placedNodes.get(msg.id);
             if (data && !data.frame.removed)
                 updateStickyVisual(data, 'dismissed');
-            broadcastItems();
+            broadcastItem();
             break;
         }
         case 'address': {
             const data = placedNodes.get(msg.id);
             if (data && !data.frame.removed)
                 updateStickyVisual(data, 'addressed');
-            broadcastItems();
+            broadcastItem();
             break;
         }
-                case 'readdress': {
+        case 'readdress': {
             const data = placedNodes.get(msg.id);
             if (data && !data.frame.removed)
                 updateStickyVisual(data, 'active');
-            broadcastItems();
+            broadcastItem();
             break;
         }
         case 'close': {
@@ -437,7 +436,7 @@ figma.ui.onmessage = async (msg) => {
         }
     }
 };
-function broadcastItems() {
+function broadcastItem() {
     const items = [];
     for (const [id, data] of placedNodes) {
         const frame = data.frame;

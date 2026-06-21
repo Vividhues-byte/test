@@ -460,7 +460,7 @@ barNode.fills = [{ type: 'SOLID', color: accent }];
   }
 }
 
-figma.showUi(__html__, { width: 380, height: 600, themeColors: true });
+figma.showUI(__html__, { width: 380, height: 600, themeColors: true });
 
 figma.ui.onmessage = async (msg: { type: string; id?: string }) => {
 switch (msg.type) {
