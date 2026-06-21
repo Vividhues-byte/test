@@ -270,6 +270,10 @@
             
              generateBtn.addEventListener('click', triggerGenerate);
         
+         document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.repeat) triggerGenerate();
+         });
+    
         function render() {
         loadingState.style.display = 'none';
           var activeCount = items.filter(function(i) { return i.status === 'active'; }).length;
