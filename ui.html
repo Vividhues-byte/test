@@ -94,7 +94,32 @@
               from { opacity: 0; transform: translateY(12px); }
               to   { opacity: 1; transform: translateY(0); }
             }
-          .feedback-list {
+        @keyframes spin {
+        to { transform: rotate(360deg); }
+        }
+        .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255,255,255,0.2);
+         border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        vertical-align: middle;
+        }
+        .loading-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-secondary);
+        }
+        .loading-state .spinner {
+        width: 24px;
+        height: 24px;
+        border-width: 3px;
+        margin-bottom: 16px;
+        }
+        .loading-state p { font-size: 13px; }
+            .feedback-list {
           display: flex;
             flex-direction: column;
             gap: 8px;
@@ -206,31 +231,48 @@
                   <p>Select some layers or a frame, then click <strong>Generate Feedback</strong> to see what your "client" would say.</p>
                 </div>
              
-            <div class="feedback-list" id="feedbackList" style="display:none"></div>
+           <div class="loading-state" id="loadingState" style="display:none">
+          <div class="spinner"></div>
+          <p>Analyzing your design&hellip</p>
+          </div>
+                <div class="feedback-list" id="feedbackList" style="display:none"></div>
             </div>
             
            <script>
          const generateBtn = document.getElementById('generateBtn');
             const feedbackList = document.getElementById('feedbackList');
             const emptyState = document.getElementById('emptyState');
+           const loadingState = document.getElementById('loadingState');
             const counter = document.getElementById('counter');
             let items = [];
-        
+           let isLoading = false;
+
         function onmessage(event) {
            const msg = event.data.pluginMessage || event.data;
            if(msg.type === 'feedback') {
             items = msg.items || [];
-        render();
+            isLoading = false;
+            render();
            }
         }
         window.addEventListener('message', onmessage);
         
-        generateBtn.addEventListener('click', () => {
+         function triggerGenerate() {
+              if (isLoading) return;
+              isLoading = true;
          parent.postMessage({ pluginMessage: { type: 'generate' } }, '*');
-            });
+           emptyState.style.display = 'none';
+               feedbackList.style.display = 'none';
+               loadingState.style.display = 'block';
+               generateBtn.textContent = 'Generating...';
+               generateBtn.disabled = true;
+             }
+            
+             generateBtn.addEventListener('click', triggerGenerate);
         
         function render() {
-        var activeCount = items.filter(function(i) { return i.status === 'active'; }).length;
+        loadingState.style.display = 'none';
+          var activeCount = items.filter(function(i) { return i.status === 'active'; }).length;
              var doneCount = items.length - activeCount;
              counter.textContent = doneCount > 0
                ? items.length + ' notes (' + activeCount + ' active, ' + doneCount + ' done)'
@@ -239,11 +281,15 @@
          if (items.length === 0) {
                 emptyState.style.display = 'block';
                 feedbackList.style.display = 'none';
+                 generateBtn.textContent = 'Generate Feedback';
+                      generateBtn.disabled = false;
                 return;
               }
         
         emptyState.style.display = 'none';
         feedbackList.style.display = 'flex';
+         generateBtn.textContent = 'Regenerate Feedback';
+              generateBtn.disabled = false;
         
               let html = '';
               for (const item of items) {
