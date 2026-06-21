@@ -4,18 +4,32 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <style>
+           :root {
+           --bg: #2C2C2C;
+           --surface: #383838;
+           --surface-hover: #444;
+           --text: #E8E8E8;
+           --text-secondary: #A0A0A0;
+           --border: #505050;
+           --accent: #0D99FF;
+           --panic: #FF3B30;
+           --change: #FF9F0A;
+           --nitpick: #8E8E93;
+           --addressed: #30D158;
+           --dismissed: #555;
+           }
             * { margin: 0; padding: 0; box-sizing: border-box; }
              body {
                 font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                background: #2C2C2C;
-                color: #E8E8E8;
+                background: var(--bg);
+                color: var(--text);
                 font-size: 12px;
                 line-height: 1.4;
                 overflow-x: hidden;
              }
              .header {
                 padding: 16px 16px 12px;
-                border-bottom: 1px solid #505050;
+                border-bottom: 1px solid var(--border);
                 display: flex;
                 align-items: center;
                 gap: 10px;
@@ -27,10 +41,10 @@
              }
              .header .badge {
                 font-size: 10px;
-                background: #383838;
+                background: var(--surface);
                 padding: 2px 8px;
                 border-radius: 4px;
-                color: #A0A0A0;
+                color: var(--text-secondary);
              }
              .content {
                 padding: 12px 16px 24px;
@@ -38,12 +52,12 @@
              .empty-state {
               text-align: center;
               padding: 48px 20px;
-              color: #A0A0A0;
+              color: var(--text-secondary);
              }
          .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
          .empty-state h3 {
             font-size: 14px;
-            color: #E8E8E8;
+            color: var(--text);
             margin-bottom: 6px;
          }
          .empty-state p {
@@ -54,7 +68,7 @@
         padding: 12px 16px;
         display: flex;
         gap: 8px;
-        border-bottom: 1px solid #505050;
+        border-bottom: 1px solid var(--border);
         }
         .btn{
         padding: 8px 16px;
@@ -63,31 +77,34 @@
         font-size: 12px;
         font-weight: 500;
         cursor: pointer;
+        transition: all 0.15s;
         display: inline-flex;
         align-items: center;
         gap: 6px;
         }
         .btn-primary{
-        background: #0D99FF;
+        background: var(--accent);
         color: #fff;
         flex: 1;
         justify-content: center;
         }
         .btn-primary:hover { background: #1AA3FF }
+          .btn-primary:disabled { opacity: 0.5; cursor: default; }
         .feedback-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
         .feedback-card{
-            background: #383838;
+            background: var(--surface);
             border-radius: 8px;
             padding: 12px;
             border-left: 3px solid transparent;
-        }        
-      .feedback-card.severity-panic { border-left-color: #FF3B30; }
-      .feedback-card.severity-change-request { border-left-color: #FF9F0A; };
-      .feedback-card.severity-nitpick { border-left-color: #8E8E93; }
+            transition: all 0.2s;
+          }        
+      .feedback-card.severity-panic { border-left-color: var(--panic); }
+      .feedback-card.severity-change-request { border-left-color: var(--change); };
+      .feedback-card.severity-nitpick { border-left-color: var(--nitpick); }
       .feedback-card.status-dismissed { opacity: 0.5; }
       .feedback-card-status-addressed{ opacity: 0.7; }
       .feedback-card.status-addressed .feedback-text { text-decoration: line-through; }
@@ -102,13 +119,14 @@
      border-radius: 4px;
      border: none;
      cursor: pointer;
-     }
-     .btn-dismiss { background: #555; color: #ccc; }
+    transition: all 0.15s;
+    }
+     .btn-dismiss { background: var(--dismissed); color: #ccc; }
          .btn-dismiss:hover { background: #666; }
-         .btn-address { background: #30D158; color: #fff; }
+         .btn-address { background: var(--addressed); color: #fff; }
          .btn-address:hover { background: #40E868; }
-         .btn-revert { background:#383838; color: #E8E8E8; border: 1px solid #505050; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; }
-         .btn-revert:hover { background: #444; }
+         .btn-revert { background:var(--surface); color: var(--text); border: 1px solid var(--border); padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+         .btn-revert:hover { background: var(--surface-hover); }
          .status-tag {
            font-size: 9px;
            padding: 1px 6px;
@@ -116,8 +134,6 @@
            text-transform: uppercase;
            letter-spacing: 0.3px;
          }
-         .feedback-card.status-addressed .status-tag { background: rgba(48,209,88,0.2); color: #30D158; }
-         .feedback-card.status-dismissed .status-tag { background: rgba(85,85,85,0.3); color: #999; }
       .feedback-header {
       display: flex;
       align-items: center;
@@ -129,8 +145,8 @@
          font-weight: 600;
          padding: 2px 6px;
          border-radius: 3px;
-         background: #2C2C2C;
-         color: #A0A0A0;
+         background: var(--bg);
+         color: var(--text-secondary);
       }
        .severity-badge {
             font-size: 9px;
@@ -140,14 +156,16 @@
             text-transform: uppercase;
             letter-spacing: 0.3px;
           }
-          .feedback-card.severity-panic .severity-badge { background: rgba(255,59,48,0.2); color: #FF3B30; }
-          .feedback-card.severity-change-request .severity-badge { background: rgba(255,159,10,0.2); color: #FF9F0A; }
-          .feedback-card.severity-nitpick .severity-badge { background: rgba(142,142,147,0.2); color: #8E8E93; }
+         .feedback-card.severity-panic .severity-badge { background: rgba(255,59,48,0.2); color: var(--panic); }
+            .feedback-card.severity-change-request .severity-badge { background: rgba(255,159,10,0.2); color: var(--change); }
+            .feedback-card.severity-nitpick .severity-badge { background: rgba(142,142,147,0.2); color: var(--nitpick); }
+            .feedback-card.status-addressed .status-tag { background: rgba(48,209,88,0.2); color: var(--addressed); }
+            .feedback-card.status-dismissed .status-tag { background: rgba(85,85,85,0.3); color: #999; }
         .feedback-text {
             font-size: 12px;
             line-height: 1.5;
             margin-bottom: 8px;
-            color: #E8E8E8;
+            color: var(--text);
         }
         </style>
          </head>
