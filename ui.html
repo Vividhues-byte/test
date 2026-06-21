@@ -90,8 +90,12 @@
         }
         .btn-primary:hover { background: #1AA3FF }
           .btn-primary:disabled { opacity: 0.5; cursor: default; }
-        .feedback-list {
-            display: flex;
+         @keyframes fadeSlideIn {
+              from { opacity: 0; transform: translateY(12px); }
+              to   { opacity: 1; transform: translateY(0); }
+            }
+          .feedback-list {
+          display: flex;
             flex-direction: column;
             gap: 8px;
         }
@@ -101,7 +105,23 @@
             padding: 12px;
             border-left: 3px solid transparent;
             transition: all 0.2s;
+            animation: fadeSlideIn 0.25s ease-out both;
           }        
+      .feedback-card:nth-child(1) { animation-delay: 0.02s; }
+      .feedback-card:nth-child(2) { animation-delay: 0.06s; }
+      .feedback-card:nth-child(3) { animation-delay: 0.10s; }
+      .feedback-card:nth-child(4) { animation-delay: 0.14s; }
+      .feedback-card:nth-child(5) { animation-delay: 0.18s; }
+      .feedback-card:nth-child(6) { animation-delay: 0.22s; }
+      .feedback-card:nth-child(7) { animation-delay: 0.26s; }
+      .feedback-card:nth-child(8) { animation-delay: 0.30s; }
+      .feedback-card:nth-child(9) { animation-delay: 0.34s; }
+      .feedback-card:nth-child(10) { animation-delay: 0.38s; }
+      .feedback-card:nth-child(11) { animation-delay: 0.42s; }
+      .feedback-card:nth-child(12) { animation-delay: 0.46s; }
+      .feedback-card:nth-child(13) { animation-delay: 0.50s; }
+      .feedback-card:nth-child(14) { animation-delay: 0.54s; }
+      .feedback-card:nth-child(15) { animation-delay: 0.58s; }
       .feedback-card.severity-panic { border-left-color: var(--panic); }
       .feedback-card.severity-change-request { border-left-color: var(--change); };
       .feedback-card.severity-nitpick { border-left-color: var(--nitpick); }
