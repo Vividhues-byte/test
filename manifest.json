@@ -2,7 +2,7 @@
     "name": "Client Feedback Generator",
     "id": "client-feedback-generator",
     "api": "1.0.0",
-    "main": "dist/index.js",
+    "main": "dist/code.js",
     "ui": "ui.html",
     "capabilities": [],
     "enableProposedApi": false,
