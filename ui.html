@@ -48,7 +48,7 @@
          }
          .empty-state p {
             font-size: 12px;
-            line-height: 1.5,
+            line-height: 1.5;
          }    
         .toolbar {
         padding: 12px 16px;
@@ -107,6 +107,8 @@
          .btn-dismiss:hover { background: #666; }
          .btn-address { background: #30D158; color: #fff; }
          .btn-address:hover { background: #40E868; }
+         .btn-revert { background:#383838; color: #E8E8E8; border: 1px solid #505050; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; }
+         .btn-revert:hover { background: #444; }
          .status-tag {
            font-size: 9px;
            padding: 1px 6px;
@@ -177,20 +179,24 @@
             let items = [];
         
         function onmessage(event) {
-           const msg = event.data.pluginMessage || event data;
+           const msg = event.data.pluginMessage || event.data;
            if(msg.type === 'feedback') {
             items = msg.items || [];
         render();
            }
         }
-        window.addEventListener('message',onmessage);
+        window.addEventListener('message', onmessage);
         
-        generateBtn.addEventListener('click',() => {
+        generateBtn.addEventListener('click', () => {
          parent.postMessage({ pluginMessage: { type: 'generate' } }, '*');
             });
         
         function render() {
-        counter.textContent = items.length + ' notes';
+        var activeCount = items.filter(function(i) { return i.status === 'active'; }).length;
+             var doneCount = items.length - activeCount;
+             counter.textContent = doneCount > 0
+               ? items.length + ' notes (' + activeCount + ' active, ' + doneCount + ' done)'
+               : items.length + ' notes';
         
          if (items.length === 0) {
                 emptyState.style.display = 'block';
@@ -212,9 +218,11 @@
                                 actionsHtml = '<button class="btn-small btn-dismiss" data-id="' + item.id + '" data-action="dismiss">Dismiss</button>' +
                                   '<button class="btn-small btn-address" data-id="' + item.id + '" data-action="address">Mark Addressed</button>';
                               } else if (item.status === 'dismissed') {
-                                actionsHtml = '<span class="status-tag">Dismissed</span>';
+                            actionsHtml = '<span class="status-tag">Dismissed</span>' +
+                                       '<button class="btn-revert" data-id="' + item.id + '" data-action="readdress">Revert</button>';
                               } else if (item.status === 'addressed') {
-                                actionsHtml = '<span class="status-tag">Addressed</span>';
+                            actionsHtml = '<span class="status-tag">Addressed</span>' +
+                            '<button class="btn-revert" data-id="' + item.id + '" data-action="readdress">Revert</button>';
                               }
                  
                               html += '<div class="feedback-card ' + severityClass + ' ' + statusClass + '">' +
