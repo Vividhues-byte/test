@@ -49,19 +49,23 @@ function rgToHex(c: RGB): string {
       return `#${r}${g}${b}`.toUpperCase();
     }
     
+    function collectNodes(node: SceneNode, result: SceneNode[]): void {
+        result.push(node);
+        if ('children' in node) {
+            for (const child of (node as ChildrenMixin).children) {
+                collectNodes(child, result);
+            }
+        }
+    }
+
     function getDesignProfile(): DesignProfile {
      const selection = figma.currentPage.selection;
     const allNodes: SceneNode[] = [];
     
     const source = selection.length > 0 ? selection : figma.currentPage.children;
-   for (const node of source) {
-    allNodes.push(node);
-    if ('children' in node) {
-        for (const child of (node as ChildrenMixin).children) {
-            allNodes.push(child);
-        }
+    for (const node of source) {
+        collectNodes(node, allNodes);
     }
-}
     const profile: DesignProfile = {
         hasLogo: false,
         logoNodeName: '',
@@ -331,20 +335,25 @@ function getStartPosition(): { x: number; y: number } {
 const loadedFonts = { regular: false, bold: false };
 
 async function ensureFonts(): Promise<void> {
-if (!loadedFonts.regular) {
-   await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
-   loadedFonts.regular = true;
-}
-if(!loadedFonts.bold) {
-  await figma.loadFontAsync({ family: 'Inter', style: 'Bold' });
-  loadedFonts.bold = true;
+try {
+  if (!loadedFonts.regular) {
+     await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+     loadedFonts.regular = true;
+  }
+  if(!loadedFonts.bold) {
+    await figma.loadFontAsync({ family: 'Inter', style: 'Bold' });
+    loadedFonts.bold = true;
+  }
+} catch (e) {
+  figma.notify('⚠️ Could not load Inter font. Please ensure it is available.', { error: true });
+  throw e;
 }
 }
 
 const placedNodes = new Map<string, StickyNoteData>();
 
 function makeStickyNote(item: FeedbackItem, x: number, y: number): StickyNoteData {
-    const noteW = 220, noteH = 120;
+    const noteW = 220;
     const severity = item.severity || 'change request';
     const status = item.status || 'active';
 
@@ -352,26 +361,36 @@ function makeStickyNote(item: FeedbackItem, x: number, y: number): StickyNoteDat
     frame.name = item.id;
     frame.x = x;
     frame.y = y;
-    frame.resize(noteW, noteH);
+    frame.resize(noteW, 120);
     frame.cornerRadius = 8;
+    frame.layoutMode = 'VERTICAL';
+    frame.primaryAxisSizingMode = 'AUTO';
+    frame.counterAxisSizingMode = 'FIXED';
+    frame.paddingTop = 8;
+    frame.paddingBottom = 12;
+    frame.paddingLeft = 12;
+    frame.paddingRight = 12;
+    frame.itemSpacing = 6;
 
-    const { bg, accent, text } = stickyNoteColor(severity,status);
+    const { bg, accent, text } = stickyNoteColor(severity, status);
     frame.fills = [{ type: 'SOLID', color: bg }];
     frame.strokeWeight = 0;
 
     const bar = figma.createRectangle();
-    bar.resize(4, noteH);
+    bar.layoutPositioning = 'ABSOLUTE';
+    bar.x = 0;
+    bar.y = 0;
+    bar.resize(4, 120);
+    bar.constraints = { horizontal: 'MIN', vertical: 'STRETCH' };
     bar.fills = [{ type: 'SOLID', color: accent }];
     bar.cornerRadius = 0;
     frame.appendChild(bar);
 
     const headText = figma.createText();
-    headText.fontName = { family: 'Inter', style: 'Bold' },
+    headText.fontName = { family: 'Inter', style: 'Bold' };
     headText.fontSize = 10;
     headText.fills = [{ type: 'SOLID', color: { r: 0.4, g: 0.4, b: 0.4 } }];
     headText.characters = `${severitylabel(severity)} ${severity.toUpperCase()}  \u2022  ${item.category}`;
-    headText.x = 12;
-    headText.y = 8;
     frame.appendChild(headText);
 
     const body = figma.createText();
@@ -379,28 +398,41 @@ function makeStickyNote(item: FeedbackItem, x: number, y: number): StickyNoteDat
     body.fontSize = 11;
     body.fills = [{ type: 'SOLID', color: text }];
     body.characters = item.text;
-    body.x = 12;
-    body.y = 28;
     body.resize(noteW - 24, 80);
     body.textAutoResize = 'HEIGHT';
     frame.appendChild(body);
 
-    frame.setPluginData('type','client-feedback');
-    frame.setPluginData('id',item.id);
-    frame.setPluginData('severity',severity);
-     frame.setPluginData('status', status);
-      frame.setPluginData('category', item.category);
-      frame.setPluginData('text', item.text);
-      if (item.nodeId) frame.setPluginData('relatedNodeId', item.nodeId);
-    
-      return { frame, textNode: body, barNode: bar, severity, status };
-    }
+    frame.setPluginData('type', 'client-feedback');
+    frame.setPluginData('id', item.id);
+    frame.setPluginData('severity', severity);
+    frame.setPluginData('status', status);
+    frame.setPluginData('category', item.category);
+    frame.setPluginData('text', item.text);
+    if (item.nodeId) frame.setPluginData('relatedNodeId', item.nodeId);
+
+    return { frame, textNode: body, barNode: bar, severity, status };
+}
 
     function clearAnnotations(): void {
+        // Remove tracked notes
         for (const { frame } of placedNodes.values()) {
             if (!frame.removed) frame.remove();
         }
         placedNodes.clear();
+
+        // Also clean up orphaned sticky notes from previous sessions
+        const orphans: SceneNode[] = [];
+        for (const child of figma.currentPage.children) {
+            if (child.type === 'FRAME' && child.getPluginData('type') === 'client-feedback') {
+                orphans.push(child);
+            }
+            if (child.type === 'LINE' && child.getPluginData('feedbackId')) {
+                orphans.push(child);
+            }
+        }
+        for (const node of orphans) {
+            node.remove();
+        }
     }
 
 function createAnnotations(items: FeedbackItem[]): void {
@@ -424,13 +456,14 @@ function createAnnotations(items: FeedbackItem[]): void {
                     const dx = endX - line.x;
                     const dy = endY - line.y;
                     const len = Math.sqrt(dx * dx + dy * dy);
-                     line.resize(len, 0);
-                              line.rotation = (Math.atan2(dy, dx) * 180) / Math.PI;
-                              line.strokeWeight = 1;
-                              line.strokes = [{ type: 'SOLID', color: { r: 1, g: 0.6, b: 0 }, opacity: 0.3 }];
-                              line.name = `connector_${item.id}`;
-                              line.setPluginData('feedbackId', item.id);
-                            }
+                    if (len > 1) {
+                        line.resize(len, 0);
+                        line.rotation = -(Math.atan2(dy, dx) * 180) / Math.PI;
+                        line.strokeWeight = 1;
+                        line.strokes = [{ type: 'SOLID', color: { r: 1, g: 0.6, b: 0 }, opacity: 0.3 }];
+                        line.name = `connector_${item.id}`;
+                        line.setPluginData('feedbackId', item.id);
+                    }
                           }
                         }
                     
