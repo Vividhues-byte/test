@@ -276,8 +276,38 @@ category: 'Accessibility', severity: 'panic',
 }),
 () => ({
 id: uid(), text: 'Dave in sales wants the opposite of what marketing said. Can you make it work for both?',
-category: 'Confliciting Feedback', severity: 'panic',
+category: 'Conflicting Feedback', severity: 'panic',
 }),
+() => ({
+    id: uid(), text: 'I showed this to my wife and she said it looks "too corporate." Can we make it more fun?',
+    category: 'Unsolicited Opinion', severity: 'nitpick',
+}),
+(p) => {
+    if (p.hasGradients) {
+        return {
+            id: uid(), text: 'The gradients feel very 2018. Can we go flat? Actually wait, gradients are back. Keep them. No, remove them.',
+            category: 'Trends', severity: 'change request',
+        };
+    }
+    return null;
+},
+() => ({
+    id: uid(), text: 'Can we see 3 more variations by end of day? Just want to explore options. No pressure.',
+    category: 'Scope Creep', severity: 'panic',
+}),
+() => ({
+    id: uid(), text: 'Love it! But can we change everything? The layout, colors, fonts, and copy. Otherwise, perfect.',
+    category: 'Mixed Signals', severity: 'panic',
+}),
+(p) => {
+    if (p.hasMultiplePages) {
+        return {
+            id: uid(), text: 'Why are there so many pages? Can we consolidate everything into one scrolling page?',
+            category: 'Navigation', severity: 'change request',
+        };
+    }
+    return null;
+},
    ];
 
 function generateFeedback(profile: DesignProfile): FeedbackItem[] {
@@ -509,10 +539,10 @@ if (frames.length > 0) figma.viewport.scrollAndZoomIntoView(frames);
  break;
    }
   case 'dismiss': {
-     const data = placedNodes.get(msg.id!)
-      if (data && !data.frame.removed) updateStickyVisual(data, 'dismissed');
-   broadcastItem();
-   break;
+      const data = placedNodes.get(msg.id!);
+       if (data && !data.frame.removed) updateStickyVisual(data, 'dismissed');
+    broadcastItem();
+    break;
   }
 case 'address': {
     const data = placedNodes.get(msg.id!);
@@ -528,10 +558,22 @@ case 'address': {
     }
     case 'close': {
          figma.closePlugin();
-             break;
-           }
+         break;
+    }
+    case 'clear': {
+         clearAnnotations();
+         broadcastItem();
+         break;
+    }
+    case 'dismiss-all': {
+         for (const data of placedNodes.values()) {
+             if (!data.frame.removed) updateStickyVisual(data, 'dismissed');
          }
-       }; 
+         broadcastItem();
+         break;
+    }
+  }
+};
 
 function broadcastItem(): void {
     const items: FeedbackItem[] = [];

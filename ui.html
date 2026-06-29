@@ -63,7 +63,7 @@
          .empty-state p {
             font-size: 12px;
             line-height: 1.5;
-         }    
+         }
         .toolbar {
         padding: 12px 16px;
         display: flex;
@@ -90,6 +90,12 @@
         }
         .btn-primary:hover { background: #1AA3FF }
           .btn-primary:disabled { opacity: 0.5; cursor: default; }
+        .btn-secondary {
+        background: var(--surface);
+        color: var(--text-secondary);
+        }
+        .btn-secondary:hover { background: var(--surface-hover); color: var(--text); }
+        .btn-secondary:disabled { opacity: 0.4; cursor: default; }
          @keyframes fadeSlideIn {
               from { opacity: 0; transform: translateY(12px); }
               to   { opacity: 1; transform: translateY(0); }
@@ -119,6 +125,57 @@
         margin-bottom: 16px;
         }
         .loading-state p { font-size: 13px; }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,0.15);
+        }
+        .stats-bar .stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: var(--surface);
+        }
+        .stat .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .stat .dot.panic { background: var(--panic); }
+        .stat .dot.change { background: var(--change); }
+        .stat .dot.nitpick { background: var(--nitpick); }
+        .stat .dot.addressed { background: var(--addressed); }
+
+        /* Bulk actions */
+        .bulk-actions {
+            display: flex;
+            gap: 6px;
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .btn-bulk {
+            padding: 4px 10px;
+            font-size: 10px;
+            font-weight: 500;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-bulk:hover { background: var(--surface); color: var(--text); }
+        .btn-bulk.danger:hover { background: rgba(255,59,48,0.15); color: var(--panic); border-color: var(--panic); }
+
             .feedback-list {
           display: flex;
             flex-direction: column;
@@ -131,7 +188,11 @@
             border-left: 3px solid transparent;
             transition: all 0.2s;
             animation: fadeSlideIn 0.25s ease-out both;
-          }        
+          }
+        .feedback-card:hover {
+            background: var(--surface-hover);
+            transform: translateX(2px);
+        }
       .feedback-card:nth-child(1) { animation-delay: 0.02s; }
       .feedback-card:nth-child(2) { animation-delay: 0.06s; }
       .feedback-card:nth-child(3) { animation-delay: 0.10s; }
@@ -147,6 +208,10 @@
       .feedback-card:nth-child(13) { animation-delay: 0.50s; }
       .feedback-card:nth-child(14) { animation-delay: 0.54s; }
       .feedback-card:nth-child(15) { animation-delay: 0.58s; }
+      .feedback-card:nth-child(16) { animation-delay: 0.62s; }
+      .feedback-card:nth-child(17) { animation-delay: 0.66s; }
+      .feedback-card:nth-child(18) { animation-delay: 0.70s; }
+      .feedback-card:nth-child(19) { animation-delay: 0.74s; }
       .feedback-card.severity-panic { border-left-color: var(--panic); }
       .feedback-card.severity-change-request { border-left-color: var(--change); }
       .feedback-card.severity-nitpick { border-left-color: var(--nitpick); }
@@ -212,6 +277,27 @@
             margin-bottom: 8px;
             color: var(--text);
         }
+
+        /* Filter tabs */
+        .filter-bar {
+            display: flex;
+            gap: 4px;
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .filter-tab {
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 4px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .filter-tab:hover { background: var(--surface); }
+        .filter-tab.active { background: var(--accent); color: #fff; }
         </style>
          </head>
          <body>
@@ -223,7 +309,19 @@
           <div class="toolbar">
            <button class="btn btn-primary" id="generateBtn">&#x1F3AF; Generate Feedback</button>
           </div>
-          
+
+          <div id="statsBar" class="stats-bar" style="display:none"></div>
+          <div id="filterBar" class="filter-bar" style="display:none">
+              <button class="filter-tab active" data-filter="all">All</button>
+              <button class="filter-tab" data-filter="active">Active</button>
+              <button class="filter-tab" data-filter="addressed">Addressed</button>
+              <button class="filter-tab" data-filter="dismissed">Dismissed</button>
+          </div>
+          <div id="bulkActions" class="bulk-actions" style="display:none">
+              <button class="btn-bulk" id="dismissAllBtn">Dismiss All</button>
+              <button class="btn-bulk danger" id="clearAllBtn">&#x1F5D1; Clear All</button>
+          </div>
+              
               <div class="content">
                 <div class="empty-state" id="emptyState">
                   <div class="icon">&#x1F4AD;</div>
@@ -233,7 +331,7 @@
              
            <div class="loading-state" id="loadingState" style="display:none">
           <div class="spinner"></div>
-          <p>Analyzing your design&hellip</p>
+          <p>Analyzing your design&hellip;</p>
           </div>
                 <div class="feedback-list" id="feedbackList" style="display:none"></div>
             </div>
@@ -244,8 +342,14 @@
             const emptyState = document.getElementById('emptyState');
            const loadingState = document.getElementById('loadingState');
             const counter = document.getElementById('counter');
+            const statsBar = document.getElementById('statsBar');
+            const filterBar = document.getElementById('filterBar');
+            const bulkActions = document.getElementById('bulkActions');
+            const dismissAllBtn = document.getElementById('dismissAllBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
             let items = [];
            let isLoading = false;
+           let currentFilter = 'all';
 
         function onmessage(event) {
            const msg = event.data.pluginMessage || event.data;
@@ -264,11 +368,32 @@
            emptyState.style.display = 'none';
                feedbackList.style.display = 'none';
                loadingState.style.display = 'block';
+               statsBar.style.display = 'none';
+               filterBar.style.display = 'none';
+               bulkActions.style.display = 'none';
                generateBtn.textContent = 'Generating...';
                generateBtn.disabled = true;
              }
             
              generateBtn.addEventListener('click', triggerGenerate);
+
+         dismissAllBtn.addEventListener('click', function() {
+             parent.postMessage({ pluginMessage: { type: 'dismiss-all' } }, '*');
+         });
+
+         clearAllBtn.addEventListener('click', function() {
+             parent.postMessage({ pluginMessage: { type: 'clear' } }, '*');
+         });
+
+         // Filter tabs
+         filterBar.addEventListener('click', function(e) {
+             if (e.target.classList.contains('filter-tab')) {
+                 currentFilter = e.target.getAttribute('data-filter');
+                 filterBar.querySelectorAll('.filter-tab').forEach(function(t) { t.classList.remove('active'); });
+                 e.target.classList.add('active');
+                 render();
+             }
+         });
         
          document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.repeat) triggerGenerate();
@@ -277,6 +402,8 @@
         function render() {
         loadingState.style.display = 'none';
           var activeCount = items.filter(function(i) { return i.status === 'active'; }).length;
+             var addressedCount = items.filter(function(i) { return i.status === 'addressed'; }).length;
+             var dismissedCount = items.filter(function(i) { return i.status === 'dismissed'; }).length;
              var doneCount = items.length - activeCount;
              counter.textContent = doneCount > 0
                ? items.length + ' notes (' + activeCount + ' active, ' + doneCount + ' done)'
@@ -285,18 +412,42 @@
          if (items.length === 0) {
                 emptyState.style.display = 'block';
                 feedbackList.style.display = 'none';
-                 generateBtn.textContent = 'Generate Feedback';
+                statsBar.style.display = 'none';
+                filterBar.style.display = 'none';
+                bulkActions.style.display = 'none';
+                 generateBtn.textContent = '\u{1F3AF} Generate Feedback';
                       generateBtn.disabled = false;
                 return;
               }
         
         emptyState.style.display = 'none';
         feedbackList.style.display = 'flex';
-         generateBtn.textContent = 'Regenerate Feedback';
+         generateBtn.textContent = '\u{1F504} Regenerate';
               generateBtn.disabled = false;
+
+        // Stats bar
+        var panicCount = items.filter(function(i) { return i.severity === 'panic'; }).length;
+        var changeCount = items.filter(function(i) { return i.severity === 'change request'; }).length;
+        var nitpickCount = items.filter(function(i) { return i.severity === 'nitpick'; }).length;
+        statsBar.style.display = 'flex';
+        statsBar.innerHTML =
+            '<div class="stat"><span class="dot panic"></span>' + panicCount + ' Panic</div>' +
+            '<div class="stat"><span class="dot change"></span>' + changeCount + ' Change</div>' +
+            '<div class="stat"><span class="dot nitpick"></span>' + nitpickCount + ' Nitpick</div>' +
+            '<div class="stat"><span class="dot addressed"></span>' + addressedCount + ' Done</div>';
+
+        // Show filter bar and bulk actions
+        filterBar.style.display = 'flex';
+        bulkActions.style.display = activeCount > 0 ? 'flex' : 'none';
+
+        // Apply filter
+        var filtered = items;
+        if (currentFilter !== 'all') {
+            filtered = items.filter(function(i) { return i.status === currentFilter; });
+        }
         
               let html = '';
-              for (const item of items) {
+              for (const item of filtered) {
                  const severityClass = 'severity-' + item.severity.replace(/\s+/g, '-');
                   const statusClass = 'status-' + item.status;      
                  const sevLabel = item.severity === 'panic' ? '\u{1F534}' : item.severity === 'change request' ? '\u{1F7E1}' : '\u{26AA}';
@@ -322,6 +473,11 @@
                     '<div class="feedback-actions">' + actionsHtml + '</div>' +
                   '</div>';
               }
+
+              if (filtered.length === 0) {
+                  html = '<div class="empty-state" style="padding:24px"><p>No ' + currentFilter + ' feedback items.</p></div>';
+              }
+
               feedbackList.innerHTML = html;
            
            feedbackList.querySelectorAll('button[data-action]').forEach(function(btn) {

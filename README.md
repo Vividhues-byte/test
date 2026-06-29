@@ -17,8 +17,12 @@ Each note is color-coded by severity, can be **dismissed** or marked **addressed
 ## Features
 
 - **Design-aware feedback** — generators inspect your actual design (logo presence, button labels, text snippets, color palette, etc.) and tailor feedback accordingly
+- **19 feedback generators** — covering logos, colors, copy, layout, whitespace, branding, competitors, scope creep, typography, buttons, mobile, images, icons, accessibility, conflicting feedback, unsolicited opinions, trends, mixed signals, and navigation
 - **Severity levels** — Panic 🔴, Change Request 🟡, Nitpick ⚪
 - **Status tracking** — mark notes as Active, Dismissed, or Addressed directly on the canvas
+- **Stats summary bar** — see at-a-glance counts of panic, change request, nitpick, and resolved items
+- **Filter tabs** — filter feedback by All, Active, Addressed, or Dismissed
+- **Bulk actions** — Dismiss All and Clear All buttons for fast workflow
 - **Connector lines** — visually link feedback to the specific node it's about
 - **Persistent plugin data** — feedback state is stored on each sticky note frame, so it survives reloads
 - **No network access** — fully local, no external API calls (`networkAccess: { allowedDomains: ["none"] }`)
@@ -66,7 +70,11 @@ Watches `code.ts` and recompiles automatically on save.
 
 ## How it works
 
-1. `getDesignProfile()` scans the current selection (or page) and builds a profile of the design — logo presence, button labels, color usage, text content, etc.
-2. `generateFeedback()` runs that profile through a pool of feedback generators, each producing a contextual (or generic fallback) comment.
+1. `getDesignProfile()` recursively scans the current selection (or page) and builds a profile of the design — logo presence, button labels, color usage, text content, etc.
+2. `generateFeedback()` runs that profile through a pool of 19 feedback generators, each producing a contextual (or generic fallback) comment.
 3. `createAnnotations()` places each feedback item as a sticky note (`FrameNode`) on the canvas, color-coded by severity, with an optional connector line to the related node.
 4. The UI (`ui.html`) lets you dismiss or address each item — these actions update the sticky note's appearance and persisted plugin data directly in Figma.
+
+## License
+
+MIT
